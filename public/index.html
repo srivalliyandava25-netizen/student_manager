@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Feedback</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Student Feedback</h1>
+    <form id="feedbackForm">
+        <input 
+        type="text"
+        id="studentName"
+        placeholder="Enter your name"
+        required
+        >
+        <select id="rating" required>
+            <option value="">Select rating</option>
+            <option value="1">1 - Poor</option>
+            <option value="2">2 - Fair</option>
+            <option value="3">3 - Good</option>
+            <option value="4">4 - Very Good</option>
+            <option value="5">5 - Excellent</option>
+        </select>
+
+        <textarea
+            id="comment"
+            placeholder="Write your Feedback"
+            required
+            ></textarea>
+
+        <button type="submit">Submit Feedback</button>
+    </form>
+    
+    <a href="feedback.html">View All Feedback</a>
+    <script src="script.js"></script>
+</body>
+</html>
