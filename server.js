@@ -1,67 +1,78 @@
-import express from 'express'
-import mongoose from 'mongoose'
-import dotenv from 'dotenv'
-import Feedback from './models/Feedback.js'
 
-dotenv.config()
+import express from 'express';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import Feedback from './models/Feedback.js';
 
-const app = express()
+dotenv.config();
 
-app.use(express.json())
-app.use(express.static('public'))
+const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-console.log("MONGODB_URI exists:", !!process.env.MONGODB_URI)
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-mongoose.connect(process.env.MONGODB_URI)
-.then(() => {
-    console.log('MongoDB connected')
-})
-.catch((error) => {
-console.log("MongoDB connection failed", error)
-})
+let dbConnection;
 
+async function connectDB() {
+    if (mongoose.connection.readyState === 1) {
+        return;
+    }
 
-app.post("/feedback", async (req,res) => {
-    console.log("BODY:", req.body)
-    try{
+    if (!dbConnection) {
+        dbConnection = mongoose.connect(process.env.MONGODB_URI)
+            .catch((error) => {
+                dbConnection = null;
+                throw error;
+            });
+    }
+
+    await dbConnection;
+}
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.post('/feedback', async (req, res) => {
+    try {
+        await connectDB();
+
         const feedback = new Feedback({
             name: req.body.name,
             rating: req.body.rating,
             comments: req.body.comments
-        })
+        });
 
-         console.log("BEFORE SAVE:", feedback)
-        await feedback.save()
-         console.log("AFTER SAVE:", feedback)
+        await feedback.save();
 
         res.status(201).json({
-            message: "Feedback submitted successfully",
-            feedback: feedback
-        })
+            message: 'Feedback submitted successfully',
+            feedback
+        });
     } catch (error) {
-        console.log("SAVE ERROR:", error)
-
+        console.error('SAVE ERROR:', error);
         res.status(500).json({
-            message: "failed to submit feedback",
-            error: error.message
-        })
+            message: 'Failed to submit feedback'
+        });
     }
-})
+});
 
-app.get("/feedback", async(req, res) => {
-    try{
-        const feedback = await Feedback.find()
-        res.json(feedback)
+app.get('/feedback', async (req, res) => {
+    try {
+        await connectDB();
+
+        const feedback = await Feedback.find();
+        res.json(feedback);
     } catch (error) {
-        console.log(error)
-        
+        console.error('FETCH ERROR:', error);
         res.status(500).json({
-            message: "Failed to get feedback"
-        })
+            message: 'Failed to get feedback'
+        });
     }
-})
+});
 
-
-app.listen(3000, () => {
-    console.log("server is running on port 3000")
-})
+export default app;
